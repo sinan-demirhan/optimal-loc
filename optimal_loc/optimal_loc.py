@@ -1,9 +1,10 @@
+import logging
 import numpy as np
 import pandas as pd
 from pymongo.mongo_client import MongoClient
 import h3
 import pickle
-from pulp import *
+from pulp import LpProblem, LpMinimize, LpVariable, lpSum, PULP_CBC_CMD
 
 
 class OptimalLoc:
@@ -68,7 +69,11 @@ class OptimalLoc:
 
         self.hex_distance_data = hex_distance_data
 
-        return hex_distance_data
+        logging.info(
+            "Distance data for each hexagons was created. You can read it by object_name.hex_distance_data"
+        )
+
+        print("Distance data for each hexagons was created. You can read it by object_name.hex_distance_data")
 
     def read_distances_from_mongodb(self, mongo_client: MongoClient,
                                     mongo_database_name: str,
@@ -161,14 +166,23 @@ class OptimalLoc:
 
         return analysis_result
 
-    def calculate_optimal_locations(self, 
-                                    distance_data: pd.DataFrame, 
-                                    frequency_data: pd.DataFrame, 
-                                    number_of_loc: int):
-        
+    def calculate_optimal_locations(self, number_of_loc: int,
+                                    distance_data: pd.DataFrame = None,
+                                    frequency_data: pd.DataFrame = None
+                                    ):
+
+        if distance_data is None:
+            distance_data = self.hex_distance_data
+        if frequency_data is None:
+            frequency_data = self.event_frequency_data
+        if distance_data is None or frequency_data is None:
+            raise ValueError("""
+                Please specify distance_data and frequency_data or run related functions.
+            """)
+
         distance_matrix = pd.pivot_table(
             distance_data, 
-            values='haversine_dist', 
+            values='distance',
             index="fromhex",
             columns="tohex"
         )
@@ -211,4 +225,11 @@ class OptimalLoc:
         with open('optimal_locations.pickle', 'wb') as handle:
             pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        return results
+        logging.info(
+            """
+            You have successfully run the algorithm. To see the optimization results, you can run 
+            object_name.supply_data or object_name.optimal_data 
+            OR
+            You can run optimal_loc.visualize() command to see the results on a map.
+            """
+        )

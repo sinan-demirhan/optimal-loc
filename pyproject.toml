@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "optimal-loc"
-version = "0.0.2"
+version = "0.0.3"
 description = "A python project which finds the optimal N locations in a given area according to the given location inputs. This package can be used for business or individual needs."
 
 authors = ["Sinan Demirhan <sdemirhan1320@gmail.com>"]
@@ -9,7 +9,7 @@ packages = [{include = "optimal_loc"}]
 license = "MIT"
 homepage = "https://github.com/sinan-demirhan/optimal-loc"
 repository = "https://github.com/sinan-demirhan/optimal-loc"
-keywords = ["optimal_loc", "optimal-loc", "optimal", "optimal location", "optimal location finder"]
+keywords = ["optimalLoc","optimal_loc", "optimal-loc", "optimal", "optimal location", "optimal location finder"]
 
 
 [tool.poetry.dependencies]
@@ -19,6 +19,8 @@ pandas = "^1.2.4"
 pymongo = "^3.11.0"
 h3 = "^3.7.6"
 pulp = "^2.4"
+folium = "^0.13.0"
+streamlit = "^1.21.0"
 
 [build-system]
 requires = ["poetry-core"]
