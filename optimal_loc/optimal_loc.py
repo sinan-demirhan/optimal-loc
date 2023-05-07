@@ -1,4 +1,3 @@
-import logging
 from numpy import array, meshgrid
 from pandas import DataFrame, pivot_table
 from pymongo.mongo_client import MongoClient
@@ -69,10 +68,6 @@ class OptimalLoc:
 
         self.hex_distance_data = hex_distance_data
 
-        logging.info(
-            "Distance data for each hexagons was created. You can read it by object_name.hex_distance_data"
-        )
-
         print("Distance data for each hexagons was created. You can read it by object_name.hex_distance_data")
 
     def read_distances_from_mongodb(self, mongo_client: MongoClient,
@@ -89,8 +84,6 @@ class OptimalLoc:
         col = db[mongo_collection_name]
         distance_data = DataFrame(list(col.find()))
         self.hex_distance_data = distance_data
-
-        return distance_data
 
     def read_distances(self, read_from_dataframe: bool = False,
                        read_from_mongo: bool = False,
@@ -116,14 +109,15 @@ class OptimalLoc:
                 """)
 
             self.hex_distance_data = distance_dataframe
-            return distance_dataframe
+            print("Successfully read the distance data")
 
         elif read_from_mongo:
             if mongo_client and mongo_database_name and mongo_collection_name:
-                return self.read_distances_from_mongodb(
+                self.read_distances_from_mongodb(
                     mongo_client=mongo_client,
                     mongo_database_name=mongo_database_name,
                     mongo_collection_name=mongo_collection_name)
+                print("Successfully read the distance data")
 
             else:
                 raise ValueError("""
@@ -225,7 +219,7 @@ class OptimalLoc:
         with open('optimal_locations.pickle', 'wb') as handle:
             pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        logging.info(
+        print(
             """
             You have successfully run the algorithm. To see the optimization results, you can run 
             object_name.supply_data or object_name.optimal_data 

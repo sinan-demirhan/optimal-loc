@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from pandas import DataFrame
 from streamlit_folium import folium_static
@@ -5,7 +6,9 @@ from pickle import load as pickle_load
 from folium import plugins, Map, CircleMarker, Marker, Icon
 from PIL import Image
 
-my_algorithm = Image.open('../Modelling Algorithm.png')
+
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+my_algorithm = Image.open(os.path.join(PACKAGE_DIR, '..', 'Modelling Algorithm.png'))
 
 st.set_page_config(layout="wide")
 
