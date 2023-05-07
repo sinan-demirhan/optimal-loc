@@ -1,9 +1,8 @@
 import streamlit as st
 from pandas import DataFrame
-import folium
 from streamlit_folium import folium_static
-import pickle
-from folium import plugins
+from pickle import load as pickle_load
+from folium import plugins, Map, CircleMarker, Marker, Icon
 from PIL import Image
 
 my_algorithm = Image.open('../Modelling Algorithm.png')
@@ -26,7 +25,7 @@ my_colours = [
 @st.cache_data
 def read_data(my_json):
     with open(my_json, 'rb') as handle:
-        output_distances = pickle.load(handle)
+        output_distances = pickle_load(handle)
     return output_distances
 
 
@@ -67,17 +66,16 @@ def plotting_main_map(optimization_data: DataFrame,
                       ):
 
     plot_center = [optimization_data["hex_lat"].median(), optimization_data["hex_lon"].median()]
-    my_map = folium.Map(location=plot_center, zoom_start=12)
+    my_map = Map(location=plot_center, zoom_start=12)
 
     for j, i in optimal_data.iterrows():
-        folium.CircleMarker([i["hex_lat"], i["hex_lon"]],
-                            radius=5,
-                            color=i["my_colours"]).add_to(my_map)
+        CircleMarker([i["hex_lat"], i["hex_lon"]],
+                     radius=5,
+                     color=i["my_colours"]).add_to(my_map)
 
     for j, i in optimal_loc_data.iterrows():
-        folium.Marker([i["hex_lat"], i["hex_lon"]], radius=5,
-                      icon=folium.Icon(color='red', icon='info-sign')
-                      ).add_to(my_map)
+        Marker([i["hex_lat"], i["hex_lon"]], radius=5,
+               icon=Icon(color='red', icon='info-sign')).add_to(my_map)
 
     plugins.Fullscreen(position='topleft').add_to(my_map)
 

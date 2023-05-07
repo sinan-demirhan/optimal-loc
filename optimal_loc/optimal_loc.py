@@ -1,8 +1,8 @@
 import logging
-import numpy as np
-import pandas as pd
+from numpy import array, meshgrid
+from pandas import DataFrame, pivot_table
 from pymongo.mongo_client import MongoClient
-import h3
+from h3 import geo_to_h3, h3_to_geo
 import pickle
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, PULP_CBC_CMD
 
@@ -14,45 +14,45 @@ class OptimalLoc:
         self.hex_distance_data = None
         self.event_frequency_data = None
 
-    def event_frequency(self, raw_data: pd.DataFrame) -> None:
+    def event_frequency(self, raw_data: DataFrame) -> None:
         """
         Calculate the frequency of events in each hexagonal region.
 
         Parameters:
-        event_data: pd.DataFrame containing event data, with columns "latitude" and "longitude".
+        event_data: pandas.DataFrame containing event data, with columns "latitude" and "longitude".
 
         Returns:
         None
         """
-        raw_data["hex_id"] = raw_data.apply(lambda x: h3.geo_to_h3(x["latitude"], x["longitude"], 8), 1)
+        raw_data["hex_id"] = raw_data.apply(lambda x: geo_to_h3(x["latitude"], x["longitude"], 8), 1)
 
         raw_data = raw_data['hex_id'].value_counts().reset_index().rename(columns={"index": "hexagon_id",
                                                                                    "hex_id": "total_event"})
-        raw_data["hex_location"] = raw_data.apply(lambda x: h3.h3_to_geo(h=x["hexagon_id"]), 1)
+        raw_data["hex_location"] = raw_data.apply(lambda x: h3_to_geo(h=x["hexagon_id"]), 1)
         raw_data["hex_lat"] = raw_data.apply(lambda x: x["hex_location"][0], 1)
         raw_data["hex_lon"] = raw_data.apply(lambda x: x["hex_location"][1], 1)
         raw_data = raw_data.drop(columns="hex_location")
 
         self.event_frequency_data = raw_data
 
-    def create_hexagon_distance_data(self, raw_data: pd.DataFrame) -> pd.DataFrame:
+    def create_hexagon_distance_data(self, raw_data: DataFrame) -> DataFrame:
         """
         Create a DataFrame containing the distances between pairs of hexagonal regions.
 
         Parameters:
-        event_data: pd.DataFrame containing event data, with columns "latitude" and "longitude".
+        event_data: pandas.DataFrame containing event data, with columns "latitude" and "longitude".
 
         Returns:
-        A pd.DataFrame containing columns
+        A pandas.DataFrame containing columns
         "fromhex", "tohex", "fromhex_lat", "fromhex_lon", "tohex_lat", "tohex_lon", and "distance".
         """
         self.event_frequency(raw_data)
         event_data = self.event_frequency_data
 
         hexagon_ids = event_data[["hexagon_id", "hex_lat", "hex_lon"]].rename(columns={"hexagon_id": "hexagon"})
-        out_list = np.array(np.meshgrid(hexagon_ids.hexagon, hexagon_ids.hexagon)).T.reshape(-1, 2)
+        out_list = array(meshgrid(hexagon_ids.hexagon, hexagon_ids.hexagon)).T.reshape(-1, 2)
 
-        hex_distance_data = pd.DataFrame(data=out_list, columns=['fromhex', 'tohex'])
+        hex_distance_data = DataFrame(data=out_list, columns=['fromhex', 'tohex'])
 
         hex_distance_data = hex_distance_data.merge(
             hexagon_ids[["hexagon", "hex_lat", "hex_lon"]].rename(
@@ -87,14 +87,14 @@ class OptimalLoc:
 
         db = mongo_client[mongo_database_name]
         col = db[mongo_collection_name]
-        distance_data = pd.DataFrame(list(col.find()))
+        distance_data = DataFrame(list(col.find()))
         self.hex_distance_data = distance_data
 
         return distance_data
 
     def read_distances(self, read_from_dataframe: bool = False,
                        read_from_mongo: bool = False,
-                       distance_dataframe: pd.DataFrame = pd.DataFrame(),
+                       distance_dataframe: DataFrame = DataFrame(),
                        mongo_client: MongoClient = None,
                        mongo_database_name: str = None,
                        mongo_collection_name: str = None):
@@ -110,7 +110,7 @@ class OptimalLoc:
         if read_from_dataframe:
             if len(distance_dataframe) == 0:
                 raise ValueError("""
-                distance_dataframe:pd.DataFrame can not be null if you want to read distances from a data frame.
+                distance_dataframe:pandas.DataFrame can not be null if you want to read distances from a data frame.
                 Please give the distance data as a dataframe where columns should be 
                 'fromhex', 'tohex', 'fromhex_lat', 'fromhex_lon', 'tohex_lat', 'tohex_lon', 'distance'
                 """)
@@ -136,7 +136,7 @@ class OptimalLoc:
             # do something with c
             pass
 
-    def prepare_data_tables(self, pulp_solution, frequency_data: pd.DataFrame):
+    def prepare_data_tables(self, pulp_solution, frequency_data: DataFrame):
         analysis_result = {}
 
         wh_loc = []
@@ -146,7 +146,7 @@ class OptimalLoc:
             wh_loc.append(v.name.split("_")[1])
             hex_loc.append(v.name.split("_")[2])
             assign.append(v.varValue)
-        df = pd.DataFrame({"supply_hexagon_id": wh_loc, "hexagon_id": hex_loc, "assign": assign})
+        df = DataFrame({"supply_hexagon_id": wh_loc, "hexagon_id": hex_loc, "assign": assign})
         optimal_data = df[df["assign"] != 0].reset_index(drop=True)
 
         optimal_data = optimal_data.merge(
@@ -167,8 +167,8 @@ class OptimalLoc:
         return analysis_result
 
     def calculate_optimal_locations(self, number_of_loc: int,
-                                    distance_data: pd.DataFrame = None,
-                                    frequency_data: pd.DataFrame = None
+                                    distance_data: DataFrame = None,
+                                    frequency_data: DataFrame = None
                                     ):
 
         if distance_data is None:
@@ -180,7 +180,7 @@ class OptimalLoc:
                 Please specify distance_data and frequency_data or run related functions.
             """)
 
-        distance_matrix = pd.pivot_table(
+        distance_matrix = pivot_table(
             distance_data, 
             values='distance',
             index="fromhex",

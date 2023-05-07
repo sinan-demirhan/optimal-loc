@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "optimal-loc"
-version = "0.0.3"
+version = "0.0.4"
 description = "A python project which finds the optimal N locations in a given area according to the given location inputs. This package can be used for business or individual needs."
 
 authors = ["Sinan Demirhan <sdemirhan1320@gmail.com>"]
