@@ -8,7 +8,7 @@ from PIL import Image
 
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
-my_algorithm = Image.open(os.path.join(PACKAGE_DIR, '..', 'Modelling Algorithm.png'))
+my_algorithm = Image.open(os.path.join(PACKAGE_DIR, 'Modelling Algorithm.png'))
 
 st.set_page_config(layout="wide")
 
