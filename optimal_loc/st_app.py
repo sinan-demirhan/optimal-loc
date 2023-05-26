@@ -6,23 +6,13 @@ from pickle import load as pickle_load
 from folium import plugins, Map, CircleMarker, Marker, Icon
 from PIL import Image
 
+from constants import COLOURS_LIST, FILENAME, OPTIMAL_DATA_COLUMN, SUPPLY_DATA_COLUMN, HEX_LAT, HEX_LON
+
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 my_algorithm = Image.open(os.path.join(PACKAGE_DIR, 'Modelling Algorithm.png'))
 
 st.set_page_config(layout="wide")
-
-my_colours = [
-    'darkred',
-    'orange',
-    'darkgreen',
-    'darkblue',
-    'purple',
-    'lightgreen',
-    'pink',
-    'lightblue',
-    'black'
-]
 
 
 @st.cache_data
@@ -39,13 +29,13 @@ st.sidebar.text('')
 ### SEASON RANGE ###
 st.sidebar.markdown("**First select the station number you want to analyze:** 👇")
 
-analysis_result = read_data("optimal_locations.pickle")
+analysis_result = read_data(FILENAME)
 
-optimal_data = DataFrame(analysis_result["optimal_data"])
-supply_data = DataFrame(analysis_result["supply_data"])
+optimal_data = DataFrame(analysis_result[OPTIMAL_DATA_COLUMN])
+supply_data = DataFrame(analysis_result[SUPPLY_DATA_COLUMN])
 
 optimal_data["supply_group"] = optimal_data.groupby(['supply_hexagon_id']).ngroup()
-optimal_data["my_colours"] = optimal_data["supply_group"].apply(lambda x: my_colours[x % (len(my_colours))])
+optimal_data["my_colours"] = optimal_data["supply_group"].apply(lambda x: COLOURS_LIST[x % (len(COLOURS_LIST))])
 
 st.sidebar.text('')
 agree = st.sidebar.checkbox('Show Model Algorithm')
@@ -68,16 +58,16 @@ def plotting_main_map(optimization_data: DataFrame,
                       optimal_loc_data: DataFrame
                       ):
 
-    plot_center = [optimization_data["hex_lat"].median(), optimization_data["hex_lon"].median()]
+    plot_center = [optimization_data[HEX_LAT].median(), optimization_data[HEX_LON].median()]
     my_map = Map(location=plot_center, zoom_start=12)
 
     for j, i in optimal_data.iterrows():
-        CircleMarker([i["hex_lat"], i["hex_lon"]],
+        CircleMarker([i[HEX_LAT], i[HEX_LON]],
                      radius=5,
                      color=i["my_colours"]).add_to(my_map)
 
     for j, i in optimal_loc_data.iterrows():
-        Marker([i["hex_lat"], i["hex_lon"]], radius=5,
+        Marker([i[HEX_LAT], i[HEX_LON]], radius=5,
                icon=Icon(color='red', icon='info-sign')).add_to(my_map)
 
     plugins.Fullscreen(position='topleft').add_to(my_map)

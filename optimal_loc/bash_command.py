@@ -1,8 +1,9 @@
 import logging
 import os
 
+from constants import FILENAME
+
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
-FILENAME = 'optimal_locations.pickle'
 
 
 def visualize():
