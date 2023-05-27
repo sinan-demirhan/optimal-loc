@@ -1,7 +1,7 @@
 import logging
 import os
 
-from constants import FILENAME
+from optimal_loc.constants import FILENAME
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 

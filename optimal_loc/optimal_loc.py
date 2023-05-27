@@ -1,11 +1,11 @@
-from numpy import array, meshgrid
+from numpy import array, meshgrid, nan
 from pandas import DataFrame, pivot_table
 from pymongo.mongo_client import MongoClient
-from h3 import geo_to_h3, h3_to_geo
+from h3 import geo_to_h3, h3_to_geo, edge_length
 import pickle
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, PULP_CBC_CMD
 
-from constants import (
+from optimal_loc.constants import (
     HEX_LAT, FROMHEX, TOHEX, HEX_LOCATION, SUPPLY_HEXAGON_ID, TOTAL_EVENT, HEX_ID, HEX_LON, HEXAGON_ID, LATITUDE,
     LONGITUDE, FROMHEX_LAT, FROMHEX_LON, HEXAGON, FILENAME, DISTANCE, SUPPLY_DATA_COLUMN, OPTIMAL_DATA_COLUMN, INDEX
 )
@@ -35,6 +35,7 @@ class OptimalLoc:
         self.optimal_data = None
         self.hex_distance_data = None
         self.event_frequency_data = None
+        self.resolution = None
 
     def event_frequency(self, raw_data: DataFrame, hex_size: str = 'auto') -> None:
         """
@@ -63,9 +64,9 @@ class OptimalLoc:
         event_freq_data = object_name.event_frequency_data
         print(event_freq_data)
         """
-        resolution = set_resolution(raw_data, hex_size)
+        self.resolution = set_resolution(raw_data, hex_size)
 
-        raw_data[HEX_ID] = raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], resolution), 1)
+        raw_data[HEX_ID] = raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], self.resolution), 1)
 
         raw_data = raw_data[HEX_ID].value_counts().reset_index().rename(columns={INDEX: HEXAGON_ID,
                                                                                  HEX_ID: TOTAL_EVENT})
@@ -124,6 +125,10 @@ class OptimalLoc:
             left_on=TOHEX,
             right_on=HEXAGON,
             how="left").drop(columns=[HEXAGON]).rename(columns={HEX_LON: "tohex_lon", HEX_LAT: 'tohex_lat'})
+
+        # Average distance between two random points within a circle according to its diameter = (2 * radius) / 3
+        eq_hex_distance = int((edge_length(self.resolution, "m") * 2) / 3)
+        hex_distance_data[DISTANCE] = hex_distance_data.apply(lambda x: eq_hex_distance if x[FROMHEX] == x[TOHEX] else nan, 1)
 
         self.hex_distance_data = hex_distance_data
 
