@@ -11,6 +11,24 @@ from constants import (
 )
 
 
+def set_resolution(raw_data: DataFrame, hex_size: str):
+    if hex_size == 'medium':
+        resolution = 8
+    elif hex_size == 'big':
+        resolution = 5
+    elif hex_size == 'small':
+        resolution = 10
+    else:
+        resolution_set = 0
+        resolution = 15
+        while resolution_set == 0:
+            if raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], resolution), 1).nunique() < 150:
+                resolution_set = 1
+            else:
+                resolution = resolution - 1
+    return resolution
+
+
 class OptimalLoc:
     def __init__(self):
         self.supply_data = None
@@ -18,12 +36,13 @@ class OptimalLoc:
         self.hex_distance_data = None
         self.event_frequency_data = None
 
-    def event_frequency(self, raw_data: DataFrame) -> None:
+    def event_frequency(self, raw_data: DataFrame, hex_size: str = 'auto') -> None:
         """
         Calculate the frequency of events in each hexagonal region.
 
         Parameters:
         raw_data (DataFrame): pandas DataFrame containing event data, with columns "latitude" and "longitude".
+        hex_size (string): You can specify hexagon sizes by small, medium or big, otherwise it will be assigned as auto
 
         Returns:
         None
@@ -44,8 +63,9 @@ class OptimalLoc:
         event_freq_data = object_name.event_frequency_data
         print(event_freq_data)
         """
+        resolution = set_resolution(raw_data, hex_size)
 
-        raw_data[HEX_ID] = raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], 8), 1)
+        raw_data[HEX_ID] = raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], resolution), 1)
 
         raw_data = raw_data[HEX_ID].value_counts().reset_index().rename(columns={INDEX: HEXAGON_ID,
                                                                                  HEX_ID: TOTAL_EVENT})
@@ -56,12 +76,13 @@ class OptimalLoc:
 
         self.event_frequency_data = raw_data
 
-    def create_hexagon_distance_data(self, raw_data: DataFrame) -> None:
+    def create_hexagon_distance_data(self, raw_data: DataFrame, hex_size: str = 'auto') -> None:
         """
         Create a DataFrame containing the distances between pairs of hexagonal regions.
 
         Parameters:
         raw_data (DataFrame): pandas DataFrame containing event data, with columns "latitude" and "longitude".
+        hex_size (string): You can specify hexagon sizes by small, medium or big, otherwise it will be assigned as auto
 
         Returns:
         DataFrame: A pandas DataFrame containing columns "fromhex", "tohex", "fromhex_lat", "fromhex_lon", "tohex_lat", "tohex_lon", and "distance".
@@ -83,7 +104,7 @@ class OptimalLoc:
         object.create_hexagon_distance_data(raw_event_data)
         hex_distance_data = object.hex_distance_data
         """
-        self.event_frequency(raw_data)
+        self.event_frequency(raw_data, hex_size)
         event_data = self.event_frequency_data
 
         hexagon_ids = event_data[[HEXAGON_ID, HEX_LAT, HEX_LON]].rename(columns={HEXAGON_ID: HEXAGON})
