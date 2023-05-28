@@ -1,4 +1,4 @@
-from .optimal_loc import OptimalLoc
+from .app import OptimalLoc
 from .bash_command import visualize
 
-__version__ = "0.0.9"
+__version__ = "0.1.1"
