@@ -61,7 +61,7 @@ def plotting_main_map(optimization_data: DataFrame,
     my_map = Map(location=plot_center, zoom_start=12)
 
     for j, i in optimal_data.iterrows():
-        CircleMarker([i[HEX_LAT], i[HEX_LON]],
+        CircleMarker((i[HEX_LAT], i[HEX_LON]),
                      radius=5,
                      color=i["my_colours"]).add_to(my_map)
 

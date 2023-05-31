@@ -1,9 +1,11 @@
-from numpy import array, meshgrid, nan
+from numpy import array, meshgrid, nan, percentile
 from pandas import DataFrame, pivot_table
 from pymongo.mongo_client import MongoClient
 from h3 import geo_to_h3, h3_to_geo, edge_length
 import pickle
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, PULP_CBC_CMD
+from folium import plugins, Map, CircleMarker, Marker, Icon
+
 
 from optimal_loc.app_constants import (
     HEX_LAT, FROMHEX, TOHEX, HEX_LOCATION, SUPPLY_HEXAGON_ID, TOTAL_EVENT, HEX_ID, HEX_LON, HEXAGON_ID, LATITUDE,
@@ -37,7 +39,26 @@ class OptimalLoc:
         self.event_frequency_data = None
         self.resolution = None
 
-    def event_frequency(self, raw_data: DataFrame, hex_size: str = 'auto') -> None:
+    def plot_frequency_hexagons(self):
+        plot_data = self.event_frequency_data.copy()
+        perc_90 = percentile(plot_data["total_event"], 90)
+        perc_75 = percentile(plot_data["total_event"], 75)
+        plot_data["colors"] = plot_data["total_event"].apply(lambda x: "red" if x > perc_90 else (
+            "green" if x > perc_75 else "blue"), 1)
+        WHS_COORD = [plot_data['hex_lat'].median(), plot_data['hex_lon'].median()]
+        map_nyc = Map(location=WHS_COORD, zoom_start=10, width=740, height=500)
+
+        for j, i in plot_data.iterrows():
+            CircleMarker((i["hex_lat"], i["hex_lon"]),
+                         radius=5, color=i["colors"],
+                         popup={"Total Event": i["total_event"]}
+                         ).add_to(map_nyc)
+
+        plugins.Fullscreen(position='topleft').add_to(map_nyc)
+
+        return map_nyc
+
+    def event_frequency(self, raw_input_data: DataFrame, hex_size: str = 'auto') -> None:
         """
         Calculate the frequency of events in each hexagonal region.
 
@@ -64,6 +85,7 @@ class OptimalLoc:
         event_freq_data = object_name.event_frequency_data
         print(event_freq_data)
         """
+        raw_data = raw_input_data.copy()
         self.resolution = set_resolution(raw_data, hex_size)
 
         raw_data[HEX_ID] = raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], self.resolution), 1)
@@ -106,7 +128,7 @@ class OptimalLoc:
         hex_distance_data = object.hex_distance_data
         """
         self.event_frequency(raw_data, hex_size)
-        event_data = self.event_frequency_data
+        event_data = self.event_frequency_data.copy()
 
         hexagon_ids = event_data[[HEXAGON_ID, HEX_LAT, HEX_LON]].rename(columns={HEXAGON_ID: HEXAGON})
         out_list = array(meshgrid(hexagon_ids.hexagon, hexagon_ids.hexagon)).T.reshape(-1, 2)
