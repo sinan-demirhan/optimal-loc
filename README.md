@@ -1,5 +1,3 @@
-# Project Description
-
 ## What is it?
 
 The OptimalLoc package is a Python library designed to provide a solution for finding optimal locations based on various needs such as transportation and logistics, urban planning, retail, healthcare, and emergency services. The package utilizes a mixed integer linear optimization algorithm to calculate the optimal locations based on input demands and a specified number of location points.

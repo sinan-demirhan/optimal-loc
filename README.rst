@@ -1,6 +1,3 @@
-Project Description
-===================
-
 What is it?
 -----------
 
