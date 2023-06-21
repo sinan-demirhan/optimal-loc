@@ -58,7 +58,7 @@ class OptimalLoc:
 
         return map_nyc
 
-    def event_frequency(self, raw_input_data: DataFrame, hex_size: str = 'auto') -> None:
+    def event_frequency(self, raw_input_data: DataFrame, hex_size: str = 'auto', resolution: int = None) -> None:
         """
         Calculate the frequency of events in each hexagonal region.
 
@@ -86,7 +86,10 @@ class OptimalLoc:
         print(event_freq_data)
         """
         raw_data = raw_input_data.copy()
-        self.resolution = set_resolution(raw_data, hex_size)
+        if resolution:
+            self.resolution = resolution
+        else:
+            self.resolution = set_resolution(raw_data, hex_size)
 
         raw_data[HEX_ID] = raw_data.apply(lambda x: geo_to_h3(x[LATITUDE], x[LONGITUDE], self.resolution), 1)
 

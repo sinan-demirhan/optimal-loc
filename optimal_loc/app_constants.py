@@ -4,7 +4,6 @@ COLOURS_LIST = [
     'darkgreen',
     'darkblue',
     'purple',
-    'pink',
     'black'
 ]
 

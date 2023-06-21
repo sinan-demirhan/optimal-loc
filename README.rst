@@ -103,7 +103,7 @@ steps below:
    Example (reading from MongoDB):
     .. code:: python
 
-        sol.read_distances_from_mongodb(mongo_client=my_mongo_client("username", "password"),
+        sol.read_distances_from_mongodb(mongo_client=MongoClient,
                                     mongo_database_name="db_name",
                                     mongo_collection_name="collection_name")
 
