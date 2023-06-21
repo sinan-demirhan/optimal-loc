@@ -102,7 +102,7 @@ class OptimalLoc:
 
         self.event_frequency_data = raw_data
 
-    def create_hexagon_distance_data(self, raw_data: DataFrame, hex_size: str = 'auto') -> None:
+    def create_hexagon_distance_data(self, raw_data: DataFrame, hex_size: str = 'auto', resolution: int = None) -> None:
         """
         Create a DataFrame containing the distances between pairs of hexagonal regions.
 
@@ -130,7 +130,7 @@ class OptimalLoc:
         object.create_hexagon_distance_data(raw_event_data)
         hex_distance_data = object.hex_distance_data
         """
-        self.event_frequency(raw_data, hex_size)
+        self.event_frequency(raw_data, hex_size, resolution)
         event_data = self.event_frequency_data.copy()
 
         hexagon_ids = event_data[[HEXAGON_ID, HEX_LAT, HEX_LON]].rename(columns={HEXAGON_ID: HEXAGON})
